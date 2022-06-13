@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Callable
 
 from fastapi import APIRouter, Header, Form
 from starlette.requests import Request
@@ -15,8 +15,10 @@ class MSALAuthorization:
         client_config: MSALClientConfig,
         return_to_path: str = "/",
         tags: OptStrList = None,
+        redirect_handler: Callable=None
     ):
         self.handler = MSALAuthCodeHandler(client_config=client_config)
+        self.redirect_handler = redirect_handler
         if not tags:
             tags = ["authentication"]
         self.return_to_path = return_to_path
@@ -73,8 +75,13 @@ class MSALAuthorization:
         await self.handler.authorize_access_token(
             request=request, code=code, state=state
         )
+
+        uri = self.return_to_path
+        if self.redirect_handler:
+            uri = self.redirect_handler(uri, code=code, state=state)
+
         return RedirectResponse(
-            url=f"{self.return_to_path}", headers=dict(request.headers.items())
+            url=uri, headers=dict(request.headers.items())
         )
 
     async def _post_token_route(
