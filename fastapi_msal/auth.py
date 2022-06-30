@@ -70,7 +70,7 @@ class MSALAuthorization:
         )
 
     async def _get_token_route(
-        self, request: Request, code: str, state: Optional[str]
+        self, request: Request, code: Optional[str]=None, state: Optional[str]=None
     ) -> RedirectResponse:
         await self.handler.authorize_access_token(
             request=request, code=code, state=state
